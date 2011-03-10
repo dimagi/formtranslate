@@ -11,7 +11,7 @@
         $('#notify').addClass("hidden");
         
         // api
-        var do_api = function(url) {
+        var do_api = function(url, textonly) {
             var xform = $("#xform").val();
             jQuery.post(url, {xform: xform},
                         function(data){
@@ -20,10 +20,14 @@
                             notice.removeClass("hidden success error");
                             if (json_res.success) {
                                 notice.addClass("success");
-                                notice.text("Standard Output: " + json_res.outstring);
+                                if (textonly) {
+                                    notice.text("Success!   " + json_res.outstring);
+                                } else {
+                                    notice.html("Success!<br><br>" + json_res.outstring.replace(/\n/g , "<br>"));
+                                }
                             } else {
                                 notice.addClass("error");
-                                notice.text("Error Output: " + json_res.errstring);
+                                notice.html("Error!<br><br>" + json_res.errstring.replace(/\n/g , "<br>"));
                             }
                             
                         });
@@ -39,7 +43,7 @@
             do_api("{% url formtranslate_csv %}");
         });
         $('#xsd').click(function () { 
-            do_api("{% url formtranslate_xsd %}");
+            do_api("{% url formtranslate_xsd %}", true);
         });
     });            
     </script>
