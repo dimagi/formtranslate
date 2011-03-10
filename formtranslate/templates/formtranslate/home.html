@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/screen.css" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/print.css" type="text/css" media="print">
+    <!--[if lt IE 8]><link rel="stylesheet" href="https://github.com/joshuaclayton/blueprint-css/raw/master/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+    <script type="text/javascript">
+    $(function() {
+        // styling
+        $('#notify').addClass("hidden");
+        
+        // api
+        var do_api = function(url) {
+            var xform = $("#xform").val();
+            jQuery.post(url, {xform: xform},
+                        function(data){
+                            json_res = data;
+                            notice = $('#notify');
+                            notice.removeClass("hidden success error");
+                            if (json_res.success) {
+                                notice.addClass("success");
+                                notice.text("Standard Output: " + json_res.outstring);
+                            } else {
+                                notice.addClass("error");
+                                notice.text("Error Output: " + json_res.errstring);
+                            }
+                            
+                        });
+        }
+
+        $('#validate').click(function () { 
+            do_api("{% url formtranslate_validate %}");
+        });
+        $('#readable').click(function () { 
+            do_api("{% url formtranslate_readable %}");
+        });
+        $('#csv').click(function () { 
+            do_api("{% url formtranslate_csv %}");
+        });
+        $('#xsd').click(function () { 
+            do_api("{% url formtranslate_xsd %}");
+        });
+    });            
+    </script>
+    <style>
+        a { padding-right:2em; }
+        .error, .success {padding:.8em;margin-top:1em;margin-bottom:1em;border:2px solid #ddd;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Form Translate Home</h1>
+    <p>Paste the body of an xform below and then try one of the following options</p>
+    <a id="validate" href="#">Validate</a>
+    <a id="readable" href="#">Get readable form</a>
+    <a id="csv" href="#">Get csv translations</a>
+    <a id="xsd" href="#">Get xsd schema</a>
+    <div id="notify"></div>
+    <textarea id="xform" name="xform" rows="30" cols="100" style="background-color:#FDFEDE; width:100%; height:500px;" wrap="off">{{ xform|safe }}</textarea>
+    
+<br><br>
+    <p>Not much to see here yet.</p>
+</div>    
+</body>
+</html>
