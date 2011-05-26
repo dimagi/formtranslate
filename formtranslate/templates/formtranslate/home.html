@@ -8,17 +8,19 @@
     <script type="text/javascript">
     $(function() {
         // styling
-        $('#notify').addClass("hidden");
         
         // api
         var do_api = function(url, textonly) {
+            $('#notify').addClass("notice");
+            $('#notify').text("Working...");
             var xform = $("#xform").val();
             jQuery.post(url, {xform: xform},
                         function(data){
                             json_res = data;
                             notice = $('#notify');
-                            notice.removeClass("hidden success error");
+                            notice.removeClass("hidden success error notice");
                             if (json_res.success) {
+
                                 notice.addClass("success");
                                 if (textonly) {
                                     notice.text("Success!   " + json_res.outstring);
@@ -26,6 +28,7 @@
                                     notice.html("Success!<br><br>" + json_res.outstring.replace(/\n/g , "<br>"));
                                 }
                             } else {
+                                
                                 notice.addClass("error");
                                 notice.html("Error!<br><br>" + json_res.errstring.replace(/\n/g , "<br>"));
                             }
