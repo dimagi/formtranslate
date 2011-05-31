@@ -20,7 +20,7 @@ def _wrapped_api_call(request, api_func):
         try:
             ret.update(**api_func(file))
         except Exception, e:
-            ret.update(**{"success": False, "errstring": "Exception raised! %s"})
+            ret.update(**{"success": False, "errstring": "Exception raised! %s" % e})
     return HttpResponse(json.dumps(ret), mimetype="text/json")
     
 @require_POST
