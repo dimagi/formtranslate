@@ -17,6 +17,7 @@ def _wrapped_api_call(request, api_func):
     if not file:
         ret.update(**{"success": False, "errstring": "No form present!"})
     else:
+        file = file.encode('utf-8')
         try:
             ret.update(**api_func(file))
         except Exception, e:
