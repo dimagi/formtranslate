@@ -1,5 +1,7 @@
 import subprocess
 from formtranslate import config
+from tempfile import NamedTemporaryFile
+import os
 
 def validate(input_data):
     '''Validates an xform into an xsd file'''
@@ -33,23 +35,39 @@ def form_translate(input_data, operation):
     # java -jar form_translate.jar <operation> < form.xml > output
     #
     # You can pass in a filename or a full string/stream of xml data
-    p = subprocess.Popen(["java","-jar",
-                          config.FORM_TRANSLATE_JAR_LOCATION,
-                          operation], 
-                          shell=False, 
-                          stdout=subprocess.PIPE,
-                          stdin=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
-    p.stdin.write(input_data)
-    p.stdin.flush()
-    p.stdin.close()
+    with NamedTemporaryFile("w", suffix=".txt", delete=False) as stdout_file:
+        with NamedTemporaryFile("w", suffix=".txt", delete=False) as stderr_file:
+            p = subprocess.Popen(["java","-jar",
+                                  config.FORM_TRANSLATE_JAR_LOCATION,
+                                  operation], 
+                                  shell=False, 
+                                  stdin=subprocess.PIPE,
+                                  stdout=stdout_file,
+                                  stderr=stderr_file)
+            
+            p.stdin.write(input_data)
+            p.stdin.flush()
+            p.stdin.close()
+            p.wait()
+            
+            with open(stdout_file.name, "r") as f:
+                output = f.read()    
+            with open(stderr_file.name, "r") as f:
+                error = f.read()
+            
+            try:
+                os.unlink(stdout_file.name)
+                os.unlink(stderr_file.name)
+            except Exception:
+                pass
+            
+            # todo: this is horrible.
+            has_error = "exception" in error.lower() 
+            return {"success": not has_error,
+                    "errstring": error,
+                    "outstring": output}
+
+        
+        
     
-    output = p.stdout.read()    
-    error = p.stderr.read()
     
-    # todo: this is horrible.
-    has_error = "exception" in error.lower() 
-    
-    return {"success": not has_error,
-            "errstring": error,
-            "outstring": output}
