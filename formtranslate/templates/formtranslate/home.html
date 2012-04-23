@@ -10,42 +10,53 @@
         // styling
         
         // api
+        var version = '{{ version }}';
         var do_api = function(url, textonly) {
-            $('#notify').addClass("notice");
-            $('#notify').text("Working...");
+            var notice = $('#notify').addClass("notice").text("Working...");
             var xform = $("#xform").val();
-            jQuery.post(url, {xform: xform},
-                        function(data){
-                            json_res = data;
-                            notice = $('#notify');
-                            notice.removeClass("hidden success error notice");
-                            if (json_res.success) {
+            $.ajax({
+                type: 'post',
+                dataType: 'json',
+                url: url + '?version=' + version,
+                data: {xform: xform},
+                success: function (data) {
+                    notice.removeClass("hidden success error notice");
+                    if (data.success) {
+                        notice.addClass("success");
+                        if (textonly) {
+                            notice.text("Success!   " + data.outstring);
+                        } else {
+                            notice.html("Success!<br><br>" + data.outstring.replace(/\n/g , "<br>"));
+                        }
+                    } else {
+                        notice.addClass("error");
+                        notice.html("Error!<br><br>" + data.errstring.replace(/\n/g , "<br>"));
+                    }
 
-                                notice.addClass("success");
-                                if (textonly) {
-                                    notice.text("Success!   " + json_res.outstring);
-                                } else {
-                                    notice.html("Success!<br><br>" + json_res.outstring.replace(/\n/g , "<br>"));
-                                }
-                            } else {
-                                
-                                notice.addClass("error");
-                                notice.html("Error!<br><br>" + json_res.errstring.replace(/\n/g , "<br>"));
-                            }
-                            
-                        });
-        }
+                },
+                error: function (data) {
+                    notice.removeClass("hidden success error notice");
+                    notice.addClass('error');
+                    notice.text('Server Error. Try again')
+                }
 
-        $('#validate').click(function () { 
+            });
+        };
+
+        $('#validate').click(function (e) {
+            e.preventDefault();
             do_api("{% url formtranslate_validate %}");
         });
-        $('#readable').click(function () { 
+        $('#readable').click(function (e) {
+            e.preventDefault();
             do_api("{% url formtranslate_readable %}");
         });
-        $('#csv').click(function () { 
+        $('#csv').click(function (e) {
+            e.preventDefault();
             do_api("{% url formtranslate_csv %}");
         });
-        $('#xsd').click(function () { 
+        $('#xsd').click(function (e) {
+            e.preventDefault();
             do_api("{% url formtranslate_xsd %}", true);
         });
     });            

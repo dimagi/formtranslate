@@ -3,27 +3,27 @@ from formtranslate import config
 from tempfile import NamedTemporaryFile
 import os
 
-def validate(input_data):
-    '''Validates an xform into an xsd file'''
+def validate(input_data, version='1.0'):
+    """Validates an xform into an xsd file"""
     # hack
-    vals = form_translate(input_data, "schema")
+    vals = form_translate(input_data, "schema", version=version)
     vals["outstring"] = ""
     return vals
 
-def get_xsd_schema(input_data):
-    '''Translates an xform into an xsd file'''
-    return form_translate(input_data, "schema")
+def get_xsd_schema(input_data, version='1.0'):
+    """Translates an xform into an xsd file"""
+    return form_translate(input_data, "schema", version=version)
 
-def readable_form(input_data):
-    '''Gets a readable display of an xform'''
-    return form_translate(input_data, "summary")
+def readable_form(input_data, version='1.0'):
+    """Gets a readable display of an xform"""
+    return form_translate(input_data, "summary", version=version)
 
 
-def csv_dump(input_data):
-    '''Get the csv translation file from an xform'''
-    return form_translate(input_data, "csvdump")
+def csv_dump(input_data, version='1.0'):
+    """Get the csv translation file from an xform"""
+    return form_translate(input_data, "csvdump", version=version)
 
-def form_translate(input_data, operation):
+def form_translate(input_data, operation, version='1.0'):
     """Utility for interacting with the form_translate jar, which provides 
        functionality for a number of different useful form tools including 
        converting a form to an xsd file, turning a form into a more readable
@@ -37,8 +37,9 @@ def form_translate(input_data, operation):
     # You can pass in a filename or a full string/stream of xml data
     with NamedTemporaryFile("w", suffix=".txt", delete=False) as stdout_file:
         with NamedTemporaryFile("w", suffix=".txt", delete=False) as stderr_file:
+            location = config.get_form_translate_jar_location(version)
             p = subprocess.Popen(["java","-jar",
-                                  config.FORM_TRANSLATE_JAR_LOCATION,
+                                  location,
                                   operation], 
                                   shell=False, 
                                   stdin=subprocess.PIPE,

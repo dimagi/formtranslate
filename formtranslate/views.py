@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -7,11 +7,15 @@ import json
 
 
 def home(request):
-    return render_to_response("formtranslate/home.html", 
-                              {}, RequestContext(request))
+    version = request.GET.get('version', '1.0')
+    return render_to_response("formtranslate/home.html",
+                              {'version': version}, RequestContext(request))
     
 
 def _wrapped_api_call(request, api_func):
+    version = request.GET.get('version', '1.0')
+    if version not in ('1.0', '2.0'):
+        return HttpResponseBadRequest('version must be 1.0 (default) or 2.0')
     file = request.POST["xform"]
     ret = {"success": False, "errstring": "", "outstring": ""}
     if not file:
@@ -19,7 +23,7 @@ def _wrapped_api_call(request, api_func):
     else:
         file = file.encode('utf-8')
         try:
-            ret.update(**api_func(file))
+            ret.update(**api_func(file, version))
         except Exception, e:
             ret.update(**{"success": False, "errstring": "Exception raised! %s" % e})
     return HttpResponse(json.dumps(ret), mimetype="text/json")
