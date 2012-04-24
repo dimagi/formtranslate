@@ -1,3 +1,4 @@
+from contextlib import nested
 import subprocess
 from formtranslate import config
 from tempfile import NamedTemporaryFile
@@ -35,40 +36,42 @@ def form_translate(input_data, operation, version='1.0'):
     # java -jar form_translate.jar <operation> < form.xml > output
     #
     # You can pass in a filename or a full string/stream of xml data
-    with NamedTemporaryFile("w", suffix=".txt", delete=False) as stdout_file:
-        with NamedTemporaryFile("w", suffix=".txt", delete=False) as stderr_file:
-            location = config.get_form_translate_jar_location(version)
+
+    with NamedTemporaryFile("w", suffix=".txt", delete=False) as stdin_temp:
+        stdin_temp.write(input_data)
+
+    with nested(
+                NamedTemporaryFile("w", suffix=".txt", delete=False),
+                NamedTemporaryFile("w", suffix=".txt", delete=False),
+            ) as (
+                stdout_file,
+                stderr_file,
+            ):
+        location = config.get_form_translate_jar_location(version)
+        with open(stdin_temp.name, 'r') as stdin_file:
             p = subprocess.Popen(["java","-jar",
                                   location,
-                                  operation], 
-                                  shell=False, 
-                                  stdin=subprocess.PIPE,
+                                  operation],
+                                  shell=False,
+                                  stdin=stdin_file,
                                   stdout=stdout_file,
                                   stderr=stderr_file)
-            
-            p.stdin.write(input_data)
-            p.stdin.flush()
-            p.stdin.close()
-            p.wait()
-            
-            with open(stdout_file.name, "r") as f:
-                output = f.read()    
-            with open(stderr_file.name, "r") as f:
-                error = f.read()
-            
-            try:
-                os.unlink(stdout_file.name)
-                os.unlink(stderr_file.name)
-            except Exception:
-                pass
-            
-            # todo: this is horrible.
-            has_error = "exception" in error.lower() 
-            return {"success": not has_error,
-                    "errstring": error,
-                    "outstring": output}
 
-        
-        
-    
-    
+    p.wait()
+
+    with open(stdout_file.name, "r") as f:
+        output = f.read()
+    with open(stderr_file.name, "r") as f:
+        error = f.read()
+
+    for file in (stdout_file, stderr_file, stdin_temp):
+        try:
+            os.unlink(file.name)
+        except Exception:
+            pass
+
+    # todo: this is horrible.
+    has_error = "exception" in error.lower()
+    return {"success": not has_error,
+            "errstring": error,
+            "outstring": output}
