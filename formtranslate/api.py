@@ -1,5 +1,5 @@
 from contextlib import nested
-import subprocess
+from dimagi.utils.subprocess_timeout import Subprocess, ProcessTimedOut
 from formtranslate import config
 from tempfile import NamedTemporaryFile
 import os
@@ -24,6 +24,19 @@ def csv_dump(input_data, version='1.0'):
     """Get the csv translation file from an xform"""
     return form_translate(input_data, "csvdump", version=version)
 
+# helpers
+def open_w():
+    return NamedTemporaryFile("w", suffix=".txt", delete=False)
+
+def open_r(file):
+    return open(file.name, 'r')
+
+def delete(file):
+    try:
+        os.unlink(file.name)
+    except Exception:
+        pass
+
 def form_translate(input_data, operation, version='1.0'):
     """Utility for interacting with the form_translate jar, which provides 
        functionality for a number of different useful form tools including 
@@ -37,41 +50,37 @@ def form_translate(input_data, operation, version='1.0'):
     #
     # You can pass in a filename or a full string/stream of xml data
 
-    with NamedTemporaryFile("w", suffix=".txt", delete=False) as stdin_temp:
-        stdin_temp.write(input_data)
+    stdout_w = stderr_w = stdin_w = None
+    location = config.get_form_translate_jar_location(version)
 
-    with nested(
-                NamedTemporaryFile("w", suffix=".txt", delete=False),
-                NamedTemporaryFile("w", suffix=".txt", delete=False),
-            ) as (
-                stdout_file,
-                stderr_file,
-            ):
-        location = config.get_form_translate_jar_location(version)
-        with open(stdin_temp.name, 'r') as stdin_file:
-            p = subprocess.Popen(["java","-jar",
-                                  location,
-                                  operation],
-                                  shell=False,
-                                  stdin=stdin_file,
-                                  stdout=stdout_file,
-                                  stderr=stderr_file)
+    try:
+        with open_w() as stdin_w:
+            stdin_w.write(input_data)
 
-    p.wait()
+        with \
+            open_w() as stdout_w, \
+            open_w() as stderr_w, \
+            open_r(stdin_w) as stdin_r \
+        :
+            Subprocess(
+                ["java","-jar", location, operation],
+                shell=False,
+                stdin=stdin_r,
+                stdout=stdout_w,
+                stderr=stderr_w
+            ).run(timeout=3)
 
-    with open(stdout_file.name, "r") as f:
-        output = f.read()
-    with open(stderr_file.name, "r") as f:
-        error = f.read()
-
-    for file in (stdout_file, stderr_file, stdin_temp):
-        try:
-            os.unlink(file.name)
-        except Exception:
-            pass
-
-    # todo: this is horrible.
-    has_error = "exception" in error.lower()
-    return {"success": not has_error,
-            "errstring": error,
-            "outstring": output}
+        with open_r(stdout_w) as stdout_r:
+            output = stdout_r.read()
+        with open_r(stderr_w) as stderr_r:
+            error = stderr_r.read()
+    finally:
+        for file in (stdout_w, stderr_w, stdin_w):
+            delete(file)
+    # just check if 'exception' is in the error output to know whether it failed
+    success = "exception" not in error.lower()
+    return {
+        "success": success,
+        "errstring": error,
+        "outstring": output
+    }

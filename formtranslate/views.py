@@ -1,3 +1,4 @@
+from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.shortcuts import render_to_response
@@ -22,10 +23,7 @@ def _wrapped_api_call(request, api_func):
         ret.update(**{"success": False, "errstring": "No form present!"})
     else:
         file = file.encode('utf-8')
-        try:
-            ret.update(**api_func(file, version))
-        except Exception, e:
-            ret.update(**{"success": False, "errstring": "Exception raised! %s" % e})
+        ret.update(**api_func(file, version))
     return HttpResponse(json.dumps(ret), mimetype="text/json")
     
 @require_POST
