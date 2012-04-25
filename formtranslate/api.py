@@ -57,11 +57,7 @@ def form_translate(input_data, operation, version='1.0'):
         with open_w() as stdin_w:
             stdin_w.write(input_data)
 
-        with \
-            open_w() as stdout_w, \
-            open_w() as stderr_w, \
-            open_r(stdin_w) as stdin_r \
-        :
+        with open_w() as stdout_w, open_w() as stderr_w, open_r(stdin_w) as stdin_r:
             Subprocess(
                 ["java","-jar", location, operation],
                 shell=False,
