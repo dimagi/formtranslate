@@ -1,5 +1,6 @@
 from contextlib import nested
 from dimagi.utils.subprocess_timeout import Subprocess, ProcessTimedOut
+from django.conf import settings
 from formtranslate import config
 from tempfile import NamedTemporaryFile
 import os
@@ -64,7 +65,7 @@ def form_translate(input_data, operation, version='1.0'):
                 stdin=stdin_r,
                 stdout=stdout_w,
                 stderr=stderr_w
-            ).run(timeout=3)
+            ).run(timeout=getattr(settings, 'FORMTRANSLATE_TIMEOUT', 5))
 
         with open_r(stdout_w) as stdout_r:
             output = stdout_r.read()
