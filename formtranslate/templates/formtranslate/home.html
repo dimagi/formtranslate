@@ -47,19 +47,19 @@
 
         $('#validate').click(function (e) {
             e.preventDefault();
-            do_api("{% url formtranslate_validate %}");
+            do_api("{% url 'formtranslate_validate' %}");
         });
         $('#readable').click(function (e) {
             e.preventDefault();
-            do_api("{% url formtranslate_readable %}");
+            do_api("{% url 'formtranslate_readable' %}");
         });
         $('#csv').click(function (e) {
             e.preventDefault();
-            do_api("{% url formtranslate_csv %}");
+            do_api("{% url 'formtranslate_csv' %}");
         });
         $('#xsd').click(function (e) {
             e.preventDefault();
-            do_api("{% url formtranslate_xsd %}", true);
+            do_api("{% url 'formtranslate_xsd' %}", true);
         });
     });            
     </script>
