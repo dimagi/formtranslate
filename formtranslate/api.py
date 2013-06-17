@@ -15,7 +15,7 @@ def validate(input_data, version='1.0', output_only=True):
     else:
         vals = form_translate(input_data, "validate", version=version)
         if output_only:
-            json.loads(vals["outstring"]) if vals.get("outstring") else {}
+            return json.loads(vals["outstring"]) if vals.get("outstring") else {}
     return vals
 
 def get_xsd_schema(input_data, version='1.0', output_only=False):
