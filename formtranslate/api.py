@@ -16,7 +16,7 @@ def validate(input_data, version='1.0', output_only=True):
         vals = form_translate(input_data, "validate", version=version)
         json_vals = json.loads(vals["outstring"]) if vals.get("outstring") else {}
         vals["success"] = json_vals["validated"]
-        vals["errstring"] = vals["outstring"] # hack to display the response json in the
+        vals["errstring"] = vals["outstring"] # hack to display the response json in the formtranslate UI
         if output_only:
             return json_vals
     return vals
