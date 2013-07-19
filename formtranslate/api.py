@@ -4,24 +4,42 @@ from django.conf import settings
 from formtranslate import config
 from tempfile import NamedTemporaryFile
 import os
+import json
 
-def validate(input_data, version='1.0'):
+class FormValidationResults(object):
+    def __init__(self, version, data):
+        self.json = data
+        self.version = version
+        self.problems = data.get('problems', [])
+        if version == "2.0":
+            self.success = data.get('validated', False)
+            self.fatal_error = data.get('fatal_error', "")
+        else:
+            self.success = data.get('success', False)
+            self.fatal_error = data.get('errstring', "")
+
+def validate(input_data, version='1.0', get_raw=False):
     """Validates an xform into an xsd file"""
-    # hack
-    vals = form_translate(input_data, "schema", version=version)
-    vals["outstring"] = ""
-    return vals
+    if version == '1.0':
+        vals = form_translate(input_data, "schema", version=version)
+        vals["outstring"] = ""
+        raw_data = vals
+    else:
+        vals = form_translate(input_data, "validate", version=version)
+        raw_data = json.loads(vals["outstring"]) if vals.get("outstring") else {}
+        vals["success"] = raw_data.get("validated")
+        vals["errstring"] = vals["outstring"] # hack to display the response json in the formtranslate UI
+    return FormValidationResults(version, raw_data) if not get_raw else vals
 
-def get_xsd_schema(input_data, version='1.0'):
+def get_xsd_schema(input_data, version='1.0', get_raw=True):
     """Translates an xform into an xsd file"""
     return form_translate(input_data, "schema", version=version)
 
-def readable_form(input_data, version='1.0'):
+def readable_form(input_data, version='1.0', get_raw=True):
     """Gets a readable display of an xform"""
     return form_translate(input_data, "summary", version=version)
 
-
-def csv_dump(input_data, version='1.0'):
+def csv_dump(input_data, version='1.0', get_raw=True):
     """Get the csv translation file from an xform"""
     return form_translate(input_data, "csvdump", version=version)
 
@@ -39,14 +57,14 @@ def delete(file):
         pass
 
 def form_translate(input_data, operation, version='1.0'):
-    """Utility for interacting with the form_translate jar, which provides 
-       functionality for a number of different useful form tools including 
+    """Utility for interacting with the form_translate jar, which provides
+       functionality for a number of different useful form tools including
        converting a form to an xsd file, turning a form into a more readable
        format, and generating a list of translations as an exportable .csv
        file."""
-    
+
     # In case you're trying to produce this behavior on the command line for
-    # rapid testing, the command that eventually gets called is: 
+    # rapid testing, the command that eventually gets called is:
     # java -jar form_translate.jar <operation> < form.xml > output
     #
     # You can pass in a filename or a full string/stream of xml data
