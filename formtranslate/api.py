@@ -11,14 +11,16 @@ class FormValidationResults(object):
         self.json = data
         self.version = version
         self.problems = data.get('problems', [])
-        self.success = data.get('validated', False) if version == "2.0" else data.get('success', False)
-        self.fatal_error = data.get('fatal_error', "") if version == '2.0' else data.get('errstring', "")
-
+        if version == "2.0":
+            self.success = data.get('validated', False)
+            self.fatal_error = data.get('fatal_error', "")
+        else:
+            self.success = data.get('success', False)
+            self.fatal_error = data.get('errstring', "")
 
 def validate(input_data, version='1.0', get_raw=False):
     """Validates an xform into an xsd file"""
     if version == '1.0':
-        # hack
         vals = form_translate(input_data, "schema", version=version)
         vals["outstring"] = ""
         raw_data = vals
