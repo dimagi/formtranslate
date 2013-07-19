@@ -6,30 +6,38 @@ from tempfile import NamedTemporaryFile
 import os
 import json
 
-def validate(input_data, version='1.0', output_only=True):
+class FormValidationResults(object):
+    def __init__(self, version, data):
+        self.json = data
+        self.version = version
+        self.problems = data.get('problems', [])
+        self.success = data.get('validated', False) if version == "2.0" else data.get('success', False)
+        self.fatal_error = data.get('fatal_error', "") if version == '2.0' else data.get('errstring', "")
+
+
+def validate(input_data, version='1.0', get_raw=False):
     """Validates an xform into an xsd file"""
     if version == '1.0':
         # hack
         vals = form_translate(input_data, "schema", version=version)
         vals["outstring"] = ""
+        raw_data = vals
     else:
         vals = form_translate(input_data, "validate", version=version)
-        json_vals = json.loads(vals["outstring"]) if vals.get("outstring") else {}
-        vals["success"] = json_vals["validated"]
+        raw_data = json.loads(vals["outstring"]) if vals.get("outstring") else {}
+        vals["success"] = raw_data.get("validated")
         vals["errstring"] = vals["outstring"] # hack to display the response json in the formtranslate UI
-        if output_only:
-            return json_vals
-    return vals
+    return FormValidationResults(version, raw_data) if not get_raw else vals
 
-def get_xsd_schema(input_data, version='1.0', output_only=False):
+def get_xsd_schema(input_data, version='1.0', get_raw=True):
     """Translates an xform into an xsd file"""
     return form_translate(input_data, "schema", version=version)
 
-def readable_form(input_data, version='1.0', output_only=False):
+def readable_form(input_data, version='1.0', get_raw=True):
     """Gets a readable display of an xform"""
     return form_translate(input_data, "summary", version=version)
 
-def csv_dump(input_data, version='1.0', output_only=False):
+def csv_dump(input_data, version='1.0', get_raw=True):
     """Get the csv translation file from an xform"""
     return form_translate(input_data, "csvdump", version=version)
 
