@@ -8,7 +8,16 @@
     <script type="text/javascript">
     $(function() {
         // styling
-        
+
+        function textToProperHtml(text) {
+            var $ele = $('<span>');
+            var lines = text.split('\n');
+            for (var i = 0; i < lines.length; i++) {
+                $ele.append($('<div>').text(lines[i]))
+            }
+            return $ele.html();
+        }
+
         // api
         var version = '{{ version }}';
         $('#version').val(version);
@@ -28,11 +37,11 @@
                         if (textonly) {
                             notice.text("Success!   " + data.outstring);
                         } else {
-                            notice.html("Success!<br><br>" + data.outstring.replace(/\n/g , "<br>"));
+                            notice.html("Success!<br><br>" + textToProperHtml(data.outstring));
                         }
                     } else {
                         notice.addClass("error");
-                        notice.html("Error!<br><br>" + data.errstring.replace(/\n/g , "<br>"));
+                        notice.html("Error!<br><br>" + textToProperHtml(data.errstring));
                     }
 
                 },
