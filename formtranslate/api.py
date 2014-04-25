@@ -69,7 +69,7 @@ def form_translate(input_data, operation, version='1.0'):
     except sh.ErrorReturnCode_1 as e:
         result = e
         success = False
-    assert success == ("exception" not in result.stderr.lower())
+
     return {
         "success": success,
         "errstring": result.stderr,
