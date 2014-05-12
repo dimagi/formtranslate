@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+{% load hq_shared_tags %}
 <html>
 <head>
-    <link rel="stylesheet" href="{{ STATIC_URL }}formtranslate/css/blueprint/screen.css" type="text/css" media="screen, projection">
-    <link rel="stylesheet" href="{{ STATIC_URL }}formtranslate/css/blueprint/print.css" type="text/css" media="print">
-    <!--[if lt IE 8]><link rel="stylesheet" href="{{ STATIC_URL }}formtranslate/css/blueprint/ie.css" type="text/css" media="screen, projection"><![endif]-->
+    <link rel="stylesheet" href="{% static 'formtranslate/css/blueprint/screen.css' %}" type="text/css" media="screen, projection">
+    <link rel="stylesheet" href="{% static 'formtranslate/css/blueprint/print.css' %}" type="text/css" media="print">
+    <!--[if lt IE 8]><link rel="stylesheet" href="{% static 'formtranslate/css/blueprint/ie.css' %}" type="text/css" media="screen, projection"><![endif]-->
     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
     <script type="text/javascript">
     $(function() {
