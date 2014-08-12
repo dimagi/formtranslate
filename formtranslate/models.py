@@ -1,3 +1,18 @@
 from django.db import models
+import jsonobject
 
-# No models, but sometimes django and couchdbkit like to have this file here.
+
+class RichValidatorOutputProblem(jsonobject.JsonObject):
+    type = jsonobject.StringProperty(choices=[
+        "error", "markup", "invalid-structure", "dangerous", "technical"])
+    message = jsonobject.StringProperty()
+    xml_location = jsonobject.StringProperty()
+    fatal = jsonobject.BooleanProperty()
+    model_location = jsonobject.StringProperty()
+
+
+class RichValidatorOutput(jsonobject.JsonObject):
+    validated = jsonobject.BooleanProperty()
+    fatal_error = jsonobject.StringProperty()
+    fatal_error_expected = jsonobject.BooleanProperty()
+    problems = jsonobject.ListProperty(RichValidatorOutputProblem)
