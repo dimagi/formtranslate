@@ -97,7 +97,7 @@ def form_translate(input_data, operation, version='1.0'):
     """
 
     location = config.get_form_translate_jar_location(version)
-    result = sh.java('-jar', location, operation, _in=input_data,
+    result = sh.java('-Xmx128m', '-jar', location, operation, _in=input_data,
                      _ok_code=[0, 1])
 
     return result
