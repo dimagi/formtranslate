@@ -1,35 +1,69 @@
 import sh
 from formtranslate import config
 import json
+from formtranslate.models import RichValidatorOutput
 
 
-class FormValidationResults(object):
-    def __init__(self, version, data):
-        self.json = data
+class FormValidationResult(object):
+    def __init__(self, version, problems, success, fatal_error, message):
         self.version = version
-        self.problems = data.get('problems', [])
-        if version == "2.0":
-            self.success = data.get('validated', False)
-            self.fatal_error = data.get('fatal_error', "")
-        else:
-            self.success = data.get('success', False)
-            self.fatal_error = data.get('errstring', "")
+        self.problems = problems
+        self.success = success
+        self.fatal_error = fatal_error
+        self.message = message
+
+    def to_json(self):
+        return {
+            'version': self.version,
+            'problems': self.problems,
+            'success': self.success,
+            'fatal_error': self.fatal_error,
+            'message': self.message
+        }
 
 
 def validate(input_data, version='1.0', get_raw=False):
     """Validates an xform into an xsd file"""
     if version == '1.0':
-        vals = form_translate(input_data, "schema", version=version)
-        vals["outstring"] = ""
-        raw_data = vals
+        jar_result = form_translate(input_data, "schema", version=version)
+        success = jar_result.exit_code == 0
+        result = FormValidationResult(
+            version=version,
+            problems=[],
+            success=success,
+            fatal_error=jar_result.stderr,
+            message='' if success else jar_result.stderr
+        )
+    elif version == '2.0':
+        jar_result = form_translate(input_data, "validate", version=version)
+        if jar_result.stdout:
+            output = RichValidatorOutput(json.loads(jar_result.stdout))
+            result = FormValidationResult(
+                version=version,
+                problems=[problem.to_json() for problem in output.problems],
+                success=output.validated,
+                fatal_error=output.fatal_error,
+                message=jar_result.stdout,
+            )
+        else:
+            result = FormValidationResult(
+                version=version,
+                problems=[],
+                success=False,
+                fatal_error='',
+                message=jar_result.stdout,
+            )
     else:
-        vals = form_translate(input_data, "validate", version=version)
-        raw_data = (json.loads(vals["outstring"])
-                    if vals.get("outstring") else {})
-        vals["success"] = raw_data.get("validated")
-        # hack to display the response json in the formtranslate UI
-        vals["errstring"] = vals["outstring"]
-    return FormValidationResults(version, raw_data) if not get_raw else vals
+        raise ValueError('version must be either "1.0" or "2.0"')
+
+    if get_raw:
+        return {
+            'success': result.success,
+            'errstring': result.message,
+            'outstring': result.message,
+        }
+    else:
+        return result
 
 
 def get_xsd_schema(input_data, version='1.0', get_raw=True):
@@ -63,15 +97,7 @@ def form_translate(input_data, operation, version='1.0'):
     """
 
     location = config.get_form_translate_jar_location(version)
-    try:
-        result = sh.java('-jar', location, operation, _in=input_data)
-        success = True
-    except sh.ErrorReturnCode_1 as e:
-        result = e
-        success = False
+    result = sh.java('-Xmx128m', '-jar', location, operation, _in=input_data,
+                     _ok_code=[0, 1])
 
-    return {
-        "success": success,
-        "errstring": result.stderr,
-        "outstring": result.stdout,
-    }
+    return result
