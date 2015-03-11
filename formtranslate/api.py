@@ -1,7 +1,8 @@
-import sh
+import subprocess
+from subprocess import PIPE
 from formtranslate import config
 import json
-from formtranslate.models import RichValidatorOutput
+from formtranslate.models import RichValidatorOutput, ShellResult
 
 
 class FormValidationResult(object):
@@ -92,12 +93,16 @@ def form_translate(input_data, operation, version='1.0'):
         - etc.
 
     does this by calling
-       java -jar form_translate.jar <operation> < form.xml > output
+       java -jar form_translate.jar $operation < form.xml > output
 
     """
 
     location = config.get_form_translate_jar_location(version)
-    result = sh.java('-Xmx128m', '-jar', location, operation, _in=input_data,
-                     _ok_code=[0, 1])
 
-    return result
+    p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation],
+                         stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = p.communicate(input_data)
+    exit_code = p.wait()
+
+    return ShellResult(stdout=stdout.decode(), stderr=stderr.decode(),
+                       exit_code=exit_code)
