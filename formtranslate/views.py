@@ -1,4 +1,3 @@
-from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.shortcuts import render_to_response
@@ -25,7 +24,8 @@ def _wrapped_api_call(request, api_func):
         file = file.encode('utf-8')
         ret.update(**api_func(file, version, get_raw=True))
     return HttpResponse(json.dumps(ret), mimetype="text/json")
-    
+
+
 @require_POST
 def validate(request):
     """
@@ -40,7 +40,8 @@ def readable(request):
     Get a readable form
     """
     return _wrapped_api_call(request, api.readable_form)
-    
+
+
 @require_POST    
 def csv(request):
     """
@@ -55,5 +56,3 @@ def xsd(request):
     Translates an xform into an xsd file
     """
     return _wrapped_api_call(request, api.get_xsd_schema)
-    
-    
