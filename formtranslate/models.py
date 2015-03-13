@@ -1,4 +1,4 @@
-from django.db import models
+from collections import namedtuple
 import jsonobject
 
 
@@ -16,3 +16,6 @@ class RichValidatorOutput(jsonobject.JsonObject):
     fatal_error = jsonobject.StringProperty()
     fatal_error_expected = jsonobject.BooleanProperty()
     problems = jsonobject.ListProperty(RichValidatorOutputProblem)
+
+
+ShellResult = namedtuple('ShellResult', 'stdout stderr exit_code')
