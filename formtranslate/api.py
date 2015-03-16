@@ -104,5 +104,5 @@ def form_translate(input_data, operation, version='1.0'):
     stdout, stderr = p.communicate(input_data)
     exit_code = p.wait()
 
-    return ShellResult(stdout=stdout.decode(), stderr=stderr.decode(),
+    return ShellResult(stdout=stdout.decode('utf-8'), stderr=stderr.decode('utf-8'),
                        exit_code=exit_code)
