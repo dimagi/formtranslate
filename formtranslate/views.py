@@ -24,7 +24,7 @@ def _wrapped_api_call(request, api_func):
     else:
         file = file.encode('utf-8')
         ret.update(**api_func(file, version, get_raw=True))
-    return HttpResponse(json.dumps(ret), mimetype="text/json")
+    return HttpResponse(json.dumps(ret), content_type="text/json")
     
 @require_POST
 def validate(request):
