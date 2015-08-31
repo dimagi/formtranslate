@@ -3,7 +3,9 @@ from subprocess import PIPE
 from formtranslate import config
 import json
 from formtranslate.models import RichValidatorOutput, ShellResult
+import logging
 
+logger = logging.getLogger(__name__)
 
 class FormValidationResult(object):
     def __init__(self, version, problems, success, fatal_error, message):
@@ -82,7 +84,7 @@ def csv_dump(input_data, version='1.0', get_raw=True):
     return form_translate(input_data, "csvdump", version=version)
 
 
-def form_translate(input_data, operation, version='1.0'):
+def _form_translate_popen(Popen, input_data, operation, version='1.0'):
     """
     Utility for interacting with the form_translate jar,
     which provides functionality for a number of different useful form tools:
@@ -96,13 +98,29 @@ def form_translate(input_data, operation, version='1.0'):
        java -jar form_translate.jar $operation < form.xml > output
 
     """
-
     location = config.get_form_translate_jar_location(version)
 
-    p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation],
-                         stdin=PIPE, stdout=PIPE, stderr=PIPE)
+    p = Popen(['java', '-Xmx128m', '-jar', location, operation], stdin=PIPE, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate(input_data)
     exit_code = p.wait()
 
     return ShellResult(stdout=stdout.decode('utf-8'), stderr=stderr.decode('utf-8'),
                        exit_code=exit_code)
+
+
+try:
+    # use errand boy if we can
+    from errand_boy.transports.unixsocket import UNIXSocketTransport
+    def form_translate(input_data, operation, version='1.0'):
+        try:
+            errand_boy_transport = UNIXSocketTransport()
+            with errand_boy_transport.get_session() as session:
+                errand_subprocess = session.subprocess
+                return _form_translate_popen(errand_subprocess.Popen, input_data, operation, version=version)
+        except IOError:
+            logger.exception("Unable to communicate with errand boy, falling back to subprocess")
+            return _form_translate_popen(subprocess.Popen, input_data, operation, version=version)
+
+except ImportError:
+    def form_translate(input_data, operation, version='1.0'):
+        return _form_translate_popen(subprocess.Popen, input_data, operation, version=version)
