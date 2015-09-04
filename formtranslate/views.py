@@ -1,4 +1,3 @@
-from dimagi.utils.subprocess_timeout import ProcessTimedOut
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.http import require_POST
 from django.shortcuts import render_to_response
