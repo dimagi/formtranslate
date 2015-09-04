@@ -1,4 +1,3 @@
-from django.conf import settings
 import os
 
 #_DEFAULT_FORM_TRANSLATE_JAR_LOCATION = os.path.join(os.path.abspath(os.path.dirname(__file__)),
