@@ -7,7 +7,7 @@ import json
 
 
 def home(request):
-    version = request.GET.get('version', '1.0')
+    version = request.GET.get('version', '2.0')
     return render_to_response("formtranslate/home.html",
                               {'version': version}, RequestContext(request))
     
