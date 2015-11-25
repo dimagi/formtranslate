@@ -2,6 +2,7 @@ from subprocess import PIPE
 from dimagi.utils.subprocess_manager import subprocess_context
 from formtranslate import config
 import json
+from formtranslate.exceptions import FormtranslateStdoutNotJSON
 from formtranslate.models import RichValidatorOutput, ShellResult
 
 
@@ -38,7 +39,12 @@ def validate(input_data, version='1.0', get_raw=False):
     elif version == '2.0':
         jar_result = form_translate(input_data, "validate", version=version)
         if jar_result.stdout:
-            output = RichValidatorOutput(json.loads(jar_result.stdout))
+            try:
+                jar_result_json = json.loads(jar_result.stdout)
+            except ValueError:
+                raise FormtranslateStdoutNotJSON(jar_result.stdout)
+            else:
+                output = RichValidatorOutput(jar_result_json)
             result = FormValidationResult(
                 version=version,
                 problems=[problem.to_json() for problem in output.problems],
