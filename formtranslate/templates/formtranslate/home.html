@@ -23,16 +23,13 @@
         }
 
         // api
-        var version = '{{ version }}';
-        $('#version').val(version);
         var do_api = function(url, textonly) {
             var notice = $('#notify').addClass("notice").text("Working...");
             var xform = $("#xform").val();
-            var version = $('#version').val();
             $.ajax({
                 type: 'post',
                 dataType: 'json',
-                url: url + '?version=' + version,
+                url: url,
                 data: {xform: xform},
                 success: function (data) {
                     notice.removeClass("hidden success error notice");
@@ -85,13 +82,6 @@
 <div class="container">
     <h1>Form Translate Home</h1>
     <p>Paste the body of an xform below and then try one of the following options</p>
-    <div>
-        <label for="version">Version</label>
-        <select id="version">
-            <option value="1.0">CommCare 1.x</option>
-            <option value="2.0">CommCare 2.x</option>
-        </select>
-    </div>
     <a id="validate" href="#">Validate</a>
     <a id="readable" href="#">Get readable form</a>
     <a id="csv" href="#">Get csv translations</a>
