@@ -88,7 +88,8 @@ def form_translate(input_data, operation):
     with subprocess_context() as subprocess:
         location = config.get_form_translate_jar_location()
 
-        p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation],
+                             stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate(input_data)
         exit_code = p.wait()
 

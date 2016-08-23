@@ -8,7 +8,7 @@ import json
 
 def home(request):
     return render_to_response("formtranslate/home.html", RequestContext(request))
-    
+
 
 def _wrapped_api_call(request, api_func):
     file = request.POST["xform"]
@@ -19,7 +19,8 @@ def _wrapped_api_call(request, api_func):
         file = file.encode('utf-8')
         ret.update(**api_func(file, get_raw=True))
     return HttpResponse(json.dumps(ret), content_type="text/json")
-    
+
+
 @require_POST
 def validate(request):
     """
