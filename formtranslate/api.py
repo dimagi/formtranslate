@@ -7,8 +7,7 @@ from formtranslate.models import RichValidatorOutput, ShellResult
 
 
 class FormValidationResult(object):
-    def __init__(self, version, problems, success, fatal_error, message):
-        self.version = version
+    def __init__(self, problems, success, fatal_error, message):
         self.problems = problems
         self.success = success
         self.fatal_error = fatal_error
@@ -16,7 +15,6 @@ class FormValidationResult(object):
 
     def to_json(self):
         return {
-            'version': self.version,
             'problems': self.problems,
             'success': self.success,
             'fatal_error': self.fatal_error,
@@ -24,44 +22,29 @@ class FormValidationResult(object):
         }
 
 
-def validate(input_data, version='1.0', get_raw=False):
+def validate(input_data, get_raw=False):
     """Validates an xform into an xsd file"""
-    if version == '1.0':
-        jar_result = form_translate(input_data, "schema", version=version)
-        success = jar_result.exit_code == 0
-        result = FormValidationResult(
-            version=version,
-            problems=[],
-            success=success,
-            fatal_error=jar_result.stderr,
-            message='' if success else jar_result.stderr
-        )
-    elif version == '2.0':
-        jar_result = form_translate(input_data, "validate", version=version)
-        if jar_result.stdout:
-            try:
-                jar_result_json = json.loads(jar_result.stdout)
-            except ValueError:
-                raise FormtranslateStdoutNotJSON(jar_result.stdout)
-            else:
-                output = RichValidatorOutput(jar_result_json)
-            result = FormValidationResult(
-                version=version,
-                problems=[problem.to_json() for problem in output.problems],
-                success=output.validated,
-                fatal_error=output.fatal_error,
-                message=jar_result.stdout,
-            )
+    jar_result = form_translate(input_data, "validate")
+    if jar_result.stdout:
+        try:
+            jar_result_json = json.loads(jar_result.stdout)
+        except ValueError:
+            raise FormtranslateStdoutNotJSON(jar_result.stdout)
         else:
-            result = FormValidationResult(
-                version=version,
-                problems=[],
-                success=False,
-                fatal_error='',
-                message=jar_result.stdout,
-            )
+            output = RichValidatorOutput(jar_result_json)
+        result = FormValidationResult(
+            problems=[problem.to_json() for problem in output.problems],
+            success=output.validated,
+            fatal_error=output.fatal_error,
+            message=jar_result.stdout,
+        )
     else:
-        raise ValueError('version must be either "1.0" or "2.0"')
+        result = FormValidationResult(
+            problems=[],
+            success=False,
+            fatal_error='',
+            message=jar_result.stdout,
+        )
 
     if get_raw:
         return {
@@ -73,22 +56,22 @@ def validate(input_data, version='1.0', get_raw=False):
         return result
 
 
-def get_xsd_schema(input_data, version='1.0', get_raw=True):
+def get_xsd_schema(input_data, get_raw=True):
     """Translates an xform into an xsd file"""
-    return form_translate(input_data, "schema", version=version)
+    return form_translate(input_data, "schema")
 
 
-def readable_form(input_data, version='1.0', get_raw=True):
+def readable_form(input_data, get_raw=True):
     """Gets a readable display of an xform"""
-    return form_translate(input_data, "summary", version=version)
+    return form_translate(input_data, "summary")
 
 
-def csv_dump(input_data, version='1.0', get_raw=True):
+def csv_dump(input_data, get_raw=True):
     """Get the csv translation file from an xform"""
-    return form_translate(input_data, "csvdump", version=version)
+    return form_translate(input_data, "csvdump")
 
 
-def form_translate(input_data, operation, version='1.0'):
+def form_translate(input_data, operation):
     """
     Utility for interacting with the form_translate jar,
     which provides functionality for a number of different useful form tools:
@@ -103,9 +86,10 @@ def form_translate(input_data, operation, version='1.0'):
 
     """
     with subprocess_context() as subprocess:
-        location = config.get_form_translate_jar_location(version)
+        location = config.get_form_translate_jar_location()
 
-        p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        p = subprocess.Popen(['java', '-Xmx128m', '-jar', location, operation],
+                             stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p.communicate(input_data)
         exit_code = p.wait()
 

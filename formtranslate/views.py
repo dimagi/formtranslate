@@ -1,4 +1,4 @@
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse
 from django.views.decorators.http import require_POST
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
@@ -7,24 +7,20 @@ import json
 
 
 def home(request):
-    version = request.GET.get('version', '2.0')
-    return render_to_response("formtranslate/home.html",
-                              {'version': version}, RequestContext(request))
-    
+    return render_to_response("formtranslate/home.html", RequestContext(request))
+
 
 def _wrapped_api_call(request, api_func):
-    version = request.GET.get('version', '1.0')
-    if version not in ('1.0', '2.0'):
-        return HttpResponseBadRequest('version must be 1.0 (default) or 2.0')
     file = request.POST["xform"]
     ret = {"success": False, "errstring": "", "outstring": ""}
     if not file:
         ret.update(**{"success": False, "errstring": "No form present!"})
     else:
         file = file.encode('utf-8')
-        ret.update(**api_func(file, version, get_raw=True))
+        ret.update(**api_func(file, get_raw=True))
     return HttpResponse(json.dumps(ret), content_type="text/json")
-    
+
+
 @require_POST
 def validate(request):
     """
@@ -54,5 +50,3 @@ def xsd(request):
     Translates an xform into an xsd file
     """
     return _wrapped_api_call(request, api.get_xsd_schema)
-    
-    
