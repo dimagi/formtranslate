@@ -17,7 +17,9 @@ def _wrapped_api_call(request, api_func):
         ret.update(**{"success": False, "errstring": "No form present!"})
     else:
         file = file.encode('utf-8')
-        ret.update(**api_func(file, get_raw=True))
+        result = api_func(file, get_raw=True)
+        ret['outstring'] = result.stdout
+        ret['errstring'] = result.stderr
     return HttpResponse(json.dumps(ret), content_type="text/json")
 
 
